@@ -17,6 +17,7 @@ mapboxgl.Attribution = require('./ui/control/attribution');
 mapboxgl.Scale = require('./ui/control/scale');
 mapboxgl.Popup = require('./ui/popup');
 mapboxgl.Marker = require('./ui/marker');
+mapboxgl.Fullscreen = require('./ui/control/fullscreen');
 
 mapboxgl.Style = require('./style/style');
 
