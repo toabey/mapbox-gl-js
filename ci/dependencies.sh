@@ -12,7 +12,7 @@ nvm use ${NODE_VERSION}
 
 curl -o- -L https://yarnpkg.com/install.sh | bash
 
-yarn
+~/.yarn/bin/yarn
 
 if [ "$CIRCLE_BRANCH" == "master" ] || [ -n "$CIRCLE_TAG" ]; then
     pip install --user --upgrade awscli
