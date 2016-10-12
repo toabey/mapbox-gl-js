@@ -10,6 +10,7 @@ dependencies:
   cache_directories:
     - './nvm'
     - '~/.yarn-cache'
+    - '~/.yarn'
   override:
     - ./ci/dependencies.sh
 test:

@@ -10,7 +10,9 @@ source ./nvm/nvm.sh
 nvm install ${NODE_VERSION}
 nvm use ${NODE_VERSION}
 
-curl -o- -L https://yarnpkg.com/install.sh | bash
+if [[ ! -d ~/.yarn ]]; then
+    curl -o- -L https://yarnpkg.com/install.sh | bash
+fi
 
 ~/.yarn/bin/yarn
 
