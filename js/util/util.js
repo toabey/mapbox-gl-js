@@ -10,11 +10,9 @@ const Point = require('point-geometry');
  * an interpolation function that eases between 0 and 1 in a pleasing
  * cubic in-out fashion.
  *
- * @param {number} t input
- * @returns {number} input
  * @private
  */
-exports.easeCubicInOut = function (t: number) {
+exports.easeCubicInOut = function(t: number): number {
     if (t <= 0) return 0;
     if (t >= 1) return 1;
     const t2 = t * t,
@@ -26,15 +24,13 @@ exports.easeCubicInOut = function (t: number) {
  * Given given (x, y), (x1, y1) control points for a bezier curve,
  * return a function that interpolates along that curve.
  *
- * @param {number} p1x control point 1 x coordinate
- * @param {number} p1y control point 1 y coordinate
- * @param {number} p2x control point 2 x coordinate
- * @param {number} p2y control point 2 y coordinate
- * @returns {Function} interpolator: receives number value, returns
- * number value.
+ * @param p1x control point 1 x coordinate
+ * @param p1y control point 1 y coordinate
+ * @param p2x control point 2 x coordinate
+ * @param p2y control point 2 y coordinate
  * @private
  */
-exports.bezier = function(p1x: number, p1y: number, p2x: number, p2y: number) {
+exports.bezier = function(p1x: number, p1y: number, p2x: number, p2y: number): (t: number) => number {
     const bezier = new UnitBezier(p1x, p1y, p2x, p2y);
     return function(t: number) {
         return bezier.solve(t);
@@ -45,8 +41,6 @@ exports.bezier = function(p1x: number, p1y: number, p2x: number, p2y: number) {
  * A default bezier-curve powered easing function with
  * control points (0.25, 0.1) and (0.25, 1)
  *
- * @param {number} t
- * @returns {number} output
  * @private
  */
 exports.ease = exports.bezier(0.25, 0.1, 0.25, 1);
@@ -54,52 +48,51 @@ exports.ease = exports.bezier(0.25, 0.1, 0.25, 1);
 /**
  * constrain n to the given range via min + max
  *
- * @param {number} n value
- * @param {number} min the minimum value to be returned
- * @param {number} max the maximum value to be returned
- * @returns {number} the clamped value
+ * @param n value
+ * @param min the minimum value to be returned
+ * @param max the maximum value to be returned
+ * @returns the clamped value
  * @private
  */
-exports.clamp = function (n: number, min: number, max: number) {
+exports.clamp = function (n: number, min: number, max: number): number {
     return Math.min(max, Math.max(min, n));
 };
 
-/*
+/**
  * constrain n to the given range, excluding the minimum, via modular arithmetic
- * @param {number} n value
- * @param {number} min the minimum value to be returned, exclusive
- * @param {number} max the maximum value to be returned, inclusive
- * @returns {number} constrained number
+ *
+ * @param n value
+ * @param min the minimum value to be returned, exclusive
+ * @param max the maximum value to be returned, inclusive
+ * @returns constrained number
  * @private
  */
-exports.wrap = function (n: number, min: number, max: number) {
+exports.wrap = function (n: number, min: number, max: number): number {
     const d = max - min;
     const w = ((n - min) % d + d) % d + min;
     return (w === min) ? max : w;
 };
 
-/*
+/**
  * return the first non-null and non-undefined argument to this function.
- * @returns {*} argument
+ *
  * @private
  */
-exports.coalesce = function() {
+exports.coalesce = function<T>(...args: Array<?T>): ?T {
     for (let i = 0; i < arguments.length; i++) {
         const arg = arguments[i];
-        if (arg !== null && arg !== undefined)
-            return arg;
+        if (arg !== null && arg !== undefined) return arg;
     }
 };
 
-/*
+/**
  * Call an asynchronous function on an array of arguments,
  * calling `callback` with the completed results of all calls.
  *
- * @param {Array<*>} array input to each call of the async function.
- * @param {Function} fn an async function with signature (data, callback)
- * @param {Function} callback a callback run after all async work is done.
+ * @param array input to each call of the async function.
+ * @param fn an async function with signature (data, callback)
+ * @param callback a callback run after all async work is done.
  * called with an array, containing the results of each async call.
- * @returns {undefined}
  * @private
  */
 exports.asyncAll = function (array: Array<any>, fn: Function, callback: Function) {
@@ -116,16 +109,14 @@ exports.asyncAll = function (array: Array<any>, fn: Function, callback: Function
     });
 };
 
-/*
+/**
  * Compute the difference between the keys in one object and the keys
  * in another object.
  *
- * @param {Object} obj
- * @param {Object} other
- * @returns {Array<string>} keys difference
+ * @returns keys difference
  * @private
  */
-exports.keysDifference = function (obj: Object, other: Object) {
+exports.keysDifference = function (obj: Object, other: Object): Array<string> {
     const difference = [];
     for (const i in obj) {
         if (!(i in other)) {
@@ -140,12 +131,12 @@ exports.keysDifference = function (obj: Object, other: Object) {
  * copy all properties from the source objects into the destination.
  * The last source object given overrides properties from previous
  * source objects.
- * @param {Object} dest destination object
- * @param {...Object} sources sources from which properties are pulled
- * @returns {Object} dest
+ *
+ * @param dest destination object
+ * @param sources sources from which properties are pulled
  * @private
  */
-exports.extend = function (dest: Object) {
+exports.extend = function (dest: Object, ...sources: Array<Object>): Object {
     for (let i = 1; i < arguments.length; i++) {
         const src = arguments[i];
         for (const k in src) {
@@ -158,12 +149,10 @@ exports.extend = function (dest: Object) {
 /**
  * Extend a destination object with all properties of the src object,
  * using defineProperty instead of simple assignment.
- * @param {Object} dest
- * @param {Object} src
- * @returns {Object} dest
+ *
  * @private
  */
-exports.extendAll = function (dest: Object, src: Object) {
+exports.extendAll = function(dest: Object, src: Object): Object {
     for (const i in src) {
         Object.defineProperty(dest, i, Object.getOwnPropertyDescriptor(src, i));
     }
@@ -174,12 +163,9 @@ exports.extendAll = function (dest: Object, src: Object) {
  * Extend a parent's prototype with all properties in a properties
  * object.
  *
- * @param {Object} parent
- * @param {Object} props
- * @returns {Object}
  * @private
  */
-exports.inherit = function (parent: Object, props: Object) {
+exports.inherit = function (parent: Object, props: Object): Object {
     const parentProto = typeof parent === 'function' ? parent.prototype : parent,
         proto = Object.create(parentProto);
     exports.extendAll(proto, props);
@@ -190,17 +176,17 @@ exports.inherit = function (parent: Object, props: Object) {
  * Given an object and a number of properties as strings, return version
  * of that object with only those properties.
  *
- * @param {Object} src the object
- * @param {Array<string>} properties an array of property names chosen
+ * @param src the object
+ * @param properties an array of property names chosen
  * to appear on the resulting object.
- * @returns {Object} object with limited properties.
+ * @returns object with limited properties.
  * @example
  * var foo = { name: 'Charlie', age: 10 };
  * var justName = pick(foo, ['name']);
  * // justName = { name: 'Charlie' }
  * @private
  */
-exports.pick = function (src: Object, properties: Array<string>) {
+exports.pick = function (src: Object, properties: Array<string>): Object {
     const result = {};
     for (let i = 0; i < properties.length; i++) {
         const k = properties[i];
@@ -217,10 +203,10 @@ let id = 1;
  * Return a unique numeric id, starting at 1 and incrementing with
  * each call.
  *
- * @returns {number} unique numeric id.
+ * @returns unique numeric id.
  * @private
  */
-exports.uniqueId = function () {
+exports.uniqueId = function (): number {
     return id++;
 };
 
@@ -228,22 +214,22 @@ exports.uniqueId = function () {
  * Create a version of `fn` that is only called `time` milliseconds
  * after its last invocation
  *
- * @param {Function} fn the function to be debounced
- * @param {number} time millseconds after which the function will be invoked
- * @returns {Function} debounced function
+ * @param fn the function to be debounced
+ * @param time millseconds after which the function will be invoked
+ * @returns debounced function
  * @private
  */
-exports.debounce = function(fn: Function, time: number) {
+exports.debounce = function<T: Function>(fn: T, time: number): T {
     let timer, args;
 
-    return function() {
+    return ((function() {
         args = arguments;
         clearTimeout(timer);
 
         timer = setTimeout(() => {
             fn.apply(null, args);
         }, time);
-    };
+    }: any): T);
 };
 
 /**
@@ -253,9 +239,8 @@ exports.debounce = function(fn: Function, time: number) {
  * `this` to the evented object or some other value: this lets you ensure
  * the `this` value always.
  *
- * @param {Array<string>} fns list of member function names
- * @param {*} context the context value
- * @returns {undefined} changes functions in-place
+ * @param fns list of member function names
+ * @param context the context value
  * @example
  * function MyClass() {
  *   bindAll(['ontimer'], this);
@@ -268,7 +253,7 @@ exports.debounce = function(fn: Function, time: number) {
  * setTimeout(myClass.ontimer, 100);
  * @private
  */
-exports.bindAll = function(fns: Array<string>, context: any) {
+exports.bindAll = function(fns: Array<string>, context: Object): void {
     fns.forEach((fn) => {
         if (!context[fn]) { return; }
         context[fn] = context[fn].bind(context);
@@ -279,10 +264,10 @@ exports.bindAll = function(fns: Array<string>, context: any) {
  * Given a class, bind all of the methods that look like handlers: that
  * begin with _on, and bind them to the class.
  *
- * @param {Object} context an object with methods
+ * @param context an object with methods
  * @private
  */
-exports.bindHandlers = function(context: Object) {
+exports.bindHandlers = function(context: Object): void {
     for (const i in context) {
         if (typeof context[i] === 'function' && i.indexOf('_on') === 0) {
             context[i] = context[i].bind(context);
@@ -295,12 +280,12 @@ exports.bindHandlers = function(context: Object) {
  * from the `options` argument. Properties in the `options`
  * object will override existing properties.
  *
- * @param {Object} obj destination object
- * @param {Object} options object of override options
- * @returns {Object} derived options object.
+ * @param obj destination object
+ * @param options object of override options
+ * @returns derived options object.
  * @private
  */
-exports.setOptions = function(obj: Object, options: Object) {
+exports.setOptions = function(obj: Object, options: Object): Object {
     if (!obj.hasOwnProperty('options')) {
         obj.options = obj.options ? Object.create(obj.options) : {};
     }
@@ -312,11 +297,11 @@ exports.setOptions = function(obj: Object, options: Object) {
 
 /**
  * Given a list of coordinates, get their center as a coordinate.
- * @param {Array<Coordinate>} coords
- * @returns {Coordinate} centerpoint
+ *
+ * @returns centerpoint
  * @private
  */
-exports.getCoordinatesCenter = function(coords: Array<Coordinate>) {
+exports.getCoordinatesCenter = function(coords: Array<Coordinate>): Coordinate {
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
@@ -338,35 +323,29 @@ exports.getCoordinatesCenter = function(coords: Array<Coordinate>) {
 
 /**
  * Determine if a string ends with a particular substring
- * @param {string} string
- * @param {string} suffix
- * @returns {boolean}
+ *
  * @private
  */
-exports.endsWith = function(string: string, suffix: string) {
+exports.endsWith = function(string: string, suffix: string): boolean {
     return string.indexOf(suffix, string.length - suffix.length) !== -1;
 };
 
 /**
  * Determine if a string starts with a particular substring
- * @param {string} string
- * @param {string} prefix
- * @returns {boolean}
+ *
  * @private
  */
-exports.startsWith = function(string: string, prefix: string) {
+exports.startsWith = function(string: string, prefix: string): boolean {
     return string.indexOf(prefix) === 0;
 };
 
 /**
  * Create an object by mapping all the values of an existing object while
  * preserving their keys.
- * @param {Object} input
- * @param {Function} iterator
- * @returns {Object}
+ *
  * @private
  */
-exports.mapObject = function(input: Object, iterator: Function, context?: Object) {
+exports.mapObject = function(input: Object, iterator: Function, context?: Object): Object {
     const output = {};
     for (const key in input) {
         output[key] = iterator.call(context || this, input[key], key, input);
@@ -375,13 +354,11 @@ exports.mapObject = function(input: Object, iterator: Function, context?: Object
 };
 
 /**
- * Create an object by filtering out values of an existing object
- * @param {Object} input
- * @param {Function} iterator
- * @returns {Object}
+ * Create an object by filtering out values of an existing object.
+ *
  * @private
  */
-exports.filterObject = function(input: Object, iterator: Function, context?: Object) {
+exports.filterObject = function(input: Object, iterator: Function, context?: Object): Object {
     const output = {};
     for (const key in input) {
         if (iterator.call(context || this, input[key], key, input)) {
@@ -393,12 +370,10 @@ exports.filterObject = function(input: Object, iterator: Function, context?: Obj
 
 /**
  * Deeply compares two object literals.
- * @param {Object} obj1
- * @param {Object} obj2
- * @returns {boolean}
+ *
  * @private
  */
-exports.deepEqual = function(a: any, b: any) {
+exports.deepEqual = function(a: any, b: any): boolean {
     if (Array.isArray(a)) {
         if (!Array.isArray(b) || a.length !== b.length) return false;
         for (let i = 0; i < a.length; i++) {
@@ -420,16 +395,14 @@ exports.deepEqual = function(a: any, b: any) {
 
 /**
  * Deeply clones two objects.
- * @param {Object} obj1
- * @param {Object} obj2
- * @returns {boolean}
+ *
  * @private
  */
-exports.clone = function(input: Object) {
+exports.clone = function<T>(input: T): T {
     if (Array.isArray(input)) {
         return input.map(exports.clone);
-    } else if (typeof input === 'object') {
-        return exports.mapObject(input, exports.clone);
+    } else if (typeof input === 'object' && input) {
+        return ((exports.mapObject(input, exports.clone): any): T);
     } else {
         return input;
     }
@@ -437,12 +410,10 @@ exports.clone = function(input: Object) {
 
 /**
  * Check if two arrays have at least one common element.
- * @param {Array} a
- * @param {Array} b
- * @returns {boolean}
+ *
  * @private
  */
-exports.arraysIntersect = function(a: Array<any>, b: Array<any>) {
+exports.arraysIntersect = function(a: Array<any>, b: Array<any>): boolean {
     for (let l = 0; l < a.length; l++) {
         if (b.indexOf(a[l]) >= 0) return true;
     }
@@ -452,11 +423,11 @@ exports.arraysIntersect = function(a: Array<any>, b: Array<any>) {
 /**
  * Print a warning message to the console and ensure duplicate warning messages
  * are not printed.
- * @param {string} message
+ *
  * @private
  */
 const warnOnceHistory = {};
-exports.warnOnce = function(message: string) {
+exports.warnOnce = function(message: string): void {
     if (!warnOnceHistory[message]) {
         // console isn't defined in some WebWorkers, see #2558
         if (typeof console !== "undefined") console.warn(message);
@@ -467,14 +438,10 @@ exports.warnOnce = function(message: string) {
 /**
  * Indicates if the provided Points are in a counter clockwise (true) or clockwise (false) order
  *
- * @param {Point} a
- * @param {Point} b
- * @param {Point} c
- *
- * @returns {boolean} true for a counter clockwise set of points
+ * @returns true for a counter clockwise set of points
  */
 // http://bryceboe.com/2006/10/23/line-segment-intersection-algorithm/
-exports.isCounterClockwise = function(a: Point, b: Point, c: Point) {
+exports.isCounterClockwise = function(a: Point, b: Point, c: Point): boolean {
     return (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x);
 };
 
@@ -483,11 +450,9 @@ exports.isCounterClockwise = function(a: Point, b: Point, c: Point) {
  * have a clockwise winding.  Negative areas are interior rings and have a counter clockwise
  * ordering.
  *
- * @param {Array<Point>} ring - Exterior or interior ring
- *
- * @returns {number}
+ * @param ring Exterior or interior ring
  */
-exports.calculateSignedArea = function(ring: Array<Point>) {
+exports.calculateSignedArea = function(ring: Array<Point>): number {
     let sum = 0;
     for (let i = 0, len = ring.length, j = len - 1, p1, p2; i < len; j = i++) {
         p1 = ring[i];
@@ -499,11 +464,11 @@ exports.calculateSignedArea = function(ring: Array<Point>) {
 
 /**
  * Detects closed polygons, first + last point are equal
- * @param {Array<Point>} points array of points
  *
- * @return {boolean} true if the points are a closed polygon
+ * @param points array of points
+ * @return true if the points are a closed polygon
  */
-exports.isClosedPolygon = function(points: Array<Point>) : boolean {
+exports.isClosedPolygon = function(points: Array<Point>): boolean {
     // If it is 2 points that are the same then it is a point
     // If it is 3 points with start and end the same then it is a line
     if (points.length < 4)
@@ -523,12 +488,12 @@ exports.isClosedPolygon = function(points: Array<Point>) : boolean {
 
 /**
  * Converts spherical coordinates to cartesian coordinates.
- * @param {Array<number>} spherical Spherical coordinates, in [radial, azimuthal, polar]
  *
- * @return {Array<number>} cartesian coordinates in [x, y, z]
+ * @param spherical Spherical coordinates, in [radial, azimuthal, polar]
+ * @return cartesian coordinates in [x, y, z]
  */
 
-exports.sphericalToCartesian = function(spherical: Array<number>) : Array<number> {
+exports.sphericalToCartesian = function(spherical: Array<number>): Array<number> {
     const r = spherical[0];
     let azimuthal = spherical[1];
     let polar = spherical[2];
