@@ -78,8 +78,9 @@ exports.wrap = function (n: number, min: number, max: number): number {
  *
  * @private
  */
-exports.coalesce = function<T>(...args: Array<?T>): ?T {
-    for (let i = 0; i < arguments.length; i++) {
+// eslint-disable-next-line no-unused-vars
+exports.coalesce = function<T>(...values: Array<?T>): ?T {
+    for (let i = 1; i < arguments.length; i++) {
         const arg = arguments[i];
         if (arg !== null && arg !== undefined) return arg;
     }
@@ -136,8 +137,9 @@ exports.keysDifference = function (obj: Object, other: Object): Array<string> {
  * @param sources sources from which properties are pulled
  * @private
  */
+// eslint-disable-next-line no-unused-vars
 exports.extend = function (dest: Object, ...sources: Array<Object>): Object {
-    for (let i = 1; i < arguments.length; i++) {
+    for (let i = 0; i < arguments.length; i++) {
         const src = arguments[i];
         for (const k in src) {
             dest[k] = src[k];
