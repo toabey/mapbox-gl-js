@@ -285,7 +285,7 @@ exports.bindHandlers = function(context: Object): void {
  * @returns derived options object.
  * @private
  */
-exports.setOptions = function(obj: Object, options: Object): Object {
+exports.setOptions = function(obj: Object, options: ?Object): Object {
     if (!obj.hasOwnProperty('options')) {
         obj.options = obj.options ? Object.create(obj.options) : {};
     }
