@@ -1,5 +1,4 @@
 'use strict';
-// @flow weak
 
 const Bucket = require('../bucket');
 const util = require('../../util/util');
@@ -21,7 +20,7 @@ function CircleBucket() {
 
 CircleBucket.prototype = util.inherit(Bucket, {});
 
-CircleBucket.prototype.addCircleVertex = function(layoutVertexArray, x: number, y: number, extrudeX, extrudeY) {
+CircleBucket.prototype.addCircleVertex = function(layoutVertexArray, x, y, extrudeX, extrudeY) {
     return layoutVertexArray.emplaceBack(
             (x * 2) + ((extrudeX + 1) / 2),
             (y * 2) + ((extrudeY + 1) / 2));

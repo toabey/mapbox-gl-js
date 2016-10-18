@@ -1,7 +1,9 @@
 'use strict';
+// @flow
 
 const UnitBezier = require('unitbezier');
 const Coordinate = require('../geo/coordinate');
+const Point = require('point-geometry');
 
 /**
  * Given a value `t` that varies between 0 and 1, return
@@ -12,7 +14,7 @@ const Coordinate = require('../geo/coordinate');
  * @returns {number} input
  * @private
  */
-exports.easeCubicInOut = function (t) {
+exports.easeCubicInOut = function (t: number) {
     if (t <= 0) return 0;
     if (t >= 1) return 1;
     const t2 = t * t,
@@ -32,9 +34,9 @@ exports.easeCubicInOut = function (t) {
  * number value.
  * @private
  */
-exports.bezier = function(p1x, p1y, p2x, p2y) {
+exports.bezier = function(p1x: number, p1y: number, p2x: number, p2y: number) {
     const bezier = new UnitBezier(p1x, p1y, p2x, p2y);
-    return function(t) {
+    return function(t: number) {
         return bezier.solve(t);
     };
 };
@@ -58,7 +60,7 @@ exports.ease = exports.bezier(0.25, 0.1, 0.25, 1);
  * @returns {number} the clamped value
  * @private
  */
-exports.clamp = function (n, min, max) {
+exports.clamp = function (n: number, min: number, max: number) {
     return Math.min(max, Math.max(min, n));
 };
 
@@ -70,7 +72,7 @@ exports.clamp = function (n, min, max) {
  * @returns {number} constrained number
  * @private
  */
-exports.wrap = function (n, min, max) {
+exports.wrap = function (n: number, min: number, max: number) {
     const d = max - min;
     const w = ((n - min) % d + d) % d + min;
     return (w === min) ? max : w;
@@ -100,7 +102,7 @@ exports.coalesce = function() {
  * @returns {undefined}
  * @private
  */
-exports.asyncAll = function (array, fn, callback) {
+exports.asyncAll = function (array: Array<any>, fn: Function, callback: Function) {
     if (!array.length) { return callback(null, []); }
     let remaining = array.length;
     const results = new Array(array.length);
@@ -123,7 +125,7 @@ exports.asyncAll = function (array, fn, callback) {
  * @returns {Array<string>} keys difference
  * @private
  */
-exports.keysDifference = function (obj, other) {
+exports.keysDifference = function (obj: Object, other: Object) {
     const difference = [];
     for (const i in obj) {
         if (!(i in other)) {
@@ -143,7 +145,7 @@ exports.keysDifference = function (obj, other) {
  * @returns {Object} dest
  * @private
  */
-exports.extend = function (dest) {
+exports.extend = function (dest: Object) {
     for (let i = 1; i < arguments.length; i++) {
         const src = arguments[i];
         for (const k in src) {
@@ -161,7 +163,7 @@ exports.extend = function (dest) {
  * @returns {Object} dest
  * @private
  */
-exports.extendAll = function (dest, src) {
+exports.extendAll = function (dest: Object, src: Object) {
     for (const i in src) {
         Object.defineProperty(dest, i, Object.getOwnPropertyDescriptor(src, i));
     }
@@ -177,7 +179,7 @@ exports.extendAll = function (dest, src) {
  * @returns {Object}
  * @private
  */
-exports.inherit = function (parent, props) {
+exports.inherit = function (parent: Object, props: Object) {
     const parentProto = typeof parent === 'function' ? parent.prototype : parent,
         proto = Object.create(parentProto);
     exports.extendAll(proto, props);
@@ -198,7 +200,7 @@ exports.inherit = function (parent, props) {
  * // justName = { name: 'Charlie' }
  * @private
  */
-exports.pick = function (src, properties) {
+exports.pick = function (src: Object, properties: Array<string>) {
     const result = {};
     for (let i = 0; i < properties.length; i++) {
         const k = properties[i];
@@ -231,7 +233,7 @@ exports.uniqueId = function () {
  * @returns {Function} debounced function
  * @private
  */
-exports.debounce = function(fn, time) {
+exports.debounce = function(fn: Function, time: number) {
     let timer, args;
 
     return function() {
@@ -266,7 +268,7 @@ exports.debounce = function(fn, time) {
  * setTimeout(myClass.ontimer, 100);
  * @private
  */
-exports.bindAll = function(fns, context) {
+exports.bindAll = function(fns: Array<string>, context: any) {
     fns.forEach((fn) => {
         if (!context[fn]) { return; }
         context[fn] = context[fn].bind(context);
@@ -280,7 +282,7 @@ exports.bindAll = function(fns, context) {
  * @param {Object} context an object with methods
  * @private
  */
-exports.bindHandlers = function(context) {
+exports.bindHandlers = function(context: Object) {
     for (const i in context) {
         if (typeof context[i] === 'function' && i.indexOf('_on') === 0) {
             context[i] = context[i].bind(context);
@@ -298,7 +300,7 @@ exports.bindHandlers = function(context) {
  * @returns {Object} derived options object.
  * @private
  */
-exports.setOptions = function(obj, options) {
+exports.setOptions = function(obj: Object, options: Object) {
     if (!obj.hasOwnProperty('options')) {
         obj.options = obj.options ? Object.create(obj.options) : {};
     }
@@ -314,7 +316,7 @@ exports.setOptions = function(obj, options) {
  * @returns {Coordinate} centerpoint
  * @private
  */
-exports.getCoordinatesCenter = function(coords) {
+exports.getCoordinatesCenter = function(coords: Array<Coordinate>) {
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
@@ -341,7 +343,7 @@ exports.getCoordinatesCenter = function(coords) {
  * @returns {boolean}
  * @private
  */
-exports.endsWith = function(string, suffix) {
+exports.endsWith = function(string: string, suffix: string) {
     return string.indexOf(suffix, string.length - suffix.length) !== -1;
 };
 
@@ -352,7 +354,7 @@ exports.endsWith = function(string, suffix) {
  * @returns {boolean}
  * @private
  */
-exports.startsWith = function(string, prefix) {
+exports.startsWith = function(string: string, prefix: string) {
     return string.indexOf(prefix) === 0;
 };
 
@@ -364,7 +366,7 @@ exports.startsWith = function(string, prefix) {
  * @returns {Object}
  * @private
  */
-exports.mapObject = function(input, iterator, context) {
+exports.mapObject = function(input: Object, iterator: Function, context?: Object) {
     const output = {};
     for (const key in input) {
         output[key] = iterator.call(context || this, input[key], key, input);
@@ -379,7 +381,7 @@ exports.mapObject = function(input, iterator, context) {
  * @returns {Object}
  * @private
  */
-exports.filterObject = function(input, iterator, context) {
+exports.filterObject = function(input: Object, iterator: Function, context?: Object) {
     const output = {};
     for (const key in input) {
         if (iterator.call(context || this, input[key], key, input)) {
@@ -396,7 +398,7 @@ exports.filterObject = function(input, iterator, context) {
  * @returns {boolean}
  * @private
  */
-exports.deepEqual = function(a, b) {
+exports.deepEqual = function(a: any, b: any) {
     if (Array.isArray(a)) {
         if (!Array.isArray(b) || a.length !== b.length) return false;
         for (let i = 0; i < a.length; i++) {
@@ -423,7 +425,7 @@ exports.deepEqual = function(a, b) {
  * @returns {boolean}
  * @private
  */
-exports.clone = function(input) {
+exports.clone = function(input: Object) {
     if (Array.isArray(input)) {
         return input.map(exports.clone);
     } else if (typeof input === 'object') {
@@ -440,15 +442,21 @@ exports.clone = function(input) {
  * @returns {boolean}
  * @private
  */
-exports.arraysIntersect = function(a, b) {
+exports.arraysIntersect = function(a: Array<any>, b: Array<any>) {
     for (let l = 0; l < a.length; l++) {
         if (b.indexOf(a[l]) >= 0) return true;
     }
     return false;
 };
 
+/**
+ * Print a warning message to the console and ensure duplicate warning messages
+ * are not printed.
+ * @param {string} message
+ * @private
+ */
 const warnOnceHistory = {};
-exports.warnOnce = function(message) {
+exports.warnOnce = function(message: string) {
     if (!warnOnceHistory[message]) {
         // console isn't defined in some WebWorkers, see #2558
         if (typeof console !== "undefined") console.warn(message);
@@ -466,7 +474,7 @@ exports.warnOnce = function(message) {
  * @returns {boolean} true for a counter clockwise set of points
  */
 // http://bryceboe.com/2006/10/23/line-segment-intersection-algorithm/
-exports.isCounterClockwise = function(a, b, c) {
+exports.isCounterClockwise = function(a: Point, b: Point, c: Point) {
     return (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x);
 };
 
@@ -479,7 +487,7 @@ exports.isCounterClockwise = function(a, b, c) {
  *
  * @returns {number}
  */
-exports.calculateSignedArea = function(ring) {
+exports.calculateSignedArea = function(ring: Array<Point>) {
     let sum = 0;
     for (let i = 0, len = ring.length, j = len - 1, p1, p2; i < len; j = i++) {
         p1 = ring[i];
@@ -495,7 +503,7 @@ exports.calculateSignedArea = function(ring) {
  *
  * @return {boolean} true if the points are a closed polygon
  */
-exports.isClosedPolygon = function(points) {
+exports.isClosedPolygon = function(points: Array<Point>) : boolean {
     // If it is 2 points that are the same then it is a point
     // If it is 3 points with start and end the same then it is a line
     if (points.length < 4)
@@ -520,10 +528,10 @@ exports.isClosedPolygon = function(points) {
  * @return {Array<number>} cartesian coordinates in [x, y, z]
  */
 
-exports.sphericalToCartesian = function(spherical) {
+exports.sphericalToCartesian = function(spherical: Array<number>) : Array<number> {
     const r = spherical[0];
-    let azimuthal = spherical[1],
-        polar = spherical[2];
+    let azimuthal = spherical[1];
+    let polar = spherical[2];
     // We abstract "north"/"up" (compass-wise) to be 0° when really this is 90° (π/2):
     // correct for that here
     azimuthal += 90;
