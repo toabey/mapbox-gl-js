@@ -21,6 +21,9 @@ const styleSpec = require('./style_spec');
 const StyleFunction = require('./style_function');
 const getWorkerPool = require('../global_worker_pool');
 
+/**
+ * @private
+ */
 class Style extends Evented {
 
     constructor(stylesheet, map, options) {
@@ -554,6 +557,7 @@ class Style extends Evented {
         if (util.deepEqual(layer.getPaintProperty(name, klass), value)) return this;
 
         const wasFeatureConstant = layer.isPaintValueFeatureConstant(name);
+        const wasExtruded = layer.type === 'fill' && layer.isExtruded({ zoom: this.zoom });
         layer.setPaintProperty(name, value, klass);
 
         const isFeatureConstant = !(
@@ -563,7 +567,14 @@ class Style extends Evented {
             value.property !== undefined
         );
 
-        if (!isFeatureConstant || !wasFeatureConstant) {
+        const switchBuckets = (
+            layer.type === 'fill' &&
+            name === 'fill-extrude-height' &&
+            (!wasExtruded && !!value) ||
+            (wasExtruded && value === 0)
+        );
+
+        if (!isFeatureConstant || !wasFeatureConstant || switchBuckets) {
             this._updates.layers[layerId] = true;
             if (layer.source) {
                 this._updates.sources[layer.source] = true;

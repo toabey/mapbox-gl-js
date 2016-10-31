@@ -1,6 +1,8 @@
 'use strict';
 
 const StyleLayer = require('../style_layer');
+const FillBucket = require('../../data/bucket/fill_bucket');
+const FillExtrusionBucket = require('../../data/bucket/fill_extrusion_bucket');
 
 class FillStyleLayer extends StyleLayer {
 
@@ -42,6 +44,19 @@ class FillStyleLayer extends StyleLayer {
         } else {
             return super.isPaintValueZoomConstant(name);
         }
+    }
+
+    isExtruded(globalProperties) {
+        return !this.isPaintValueFeatureConstant('fill-extrude-height') ||
+            !this.isPaintValueZoomConstant('fill-extrude-height') ||
+            this.getPaintValue('fill-extrude-height', globalProperties) !== 0;
+    }
+
+    createBucket(options) {
+        if (this.isExtruded({zoom: options.zoom})) {
+            return new FillExtrusionBucket(options);
+        }
+        return new FillBucket(options);
     }
 }
 

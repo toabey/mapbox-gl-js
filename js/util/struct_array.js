@@ -19,13 +19,16 @@ const viewTypes = {
 };
 
 /**
- * @typedef StructMember
+ * @typedef {Object} StructMember
  * @private
  * @property {string} name
  * @property {string} type
  * @property {number} components
  */
 
+/**
+ * @private
+ */
 class Struct {
     /**
      * @param {StructArray} structArray The StructArray the struct is stored in
@@ -79,8 +82,11 @@ class StructArray {
     /**
      * Serialize this StructArray instance
      */
-    serialize() {
+    serialize(transferables) {
         this.trim();
+        if (transferables) {
+            transferables.push(this.arrayBuffer);
+        }
         return {
             length: this.length,
             arrayBuffer: this.arrayBuffer
@@ -165,11 +171,10 @@ const structArrayTypeCache = {};
  * - use less memory for lower-precision members
  * - can be used as buffers in WebGL.
  *
- * @class StructArrayType
- * @param {Array.<StructMember>}
- * @param options
+ * @class
+ * @param {Object} options
  * @param {number} options.alignment Use `4` to align members to 4 byte boundaries. Default is 1.
- *
+ * @param {Array<StructMember>} options.members
  * @example
  *
  * var PointArrayType = new StructArrayType({

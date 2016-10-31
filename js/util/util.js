@@ -77,19 +77,6 @@ exports.wrap = function (n, min, max) {
 };
 
 /*
- * return the first non-null and non-undefined argument to this function.
- * @returns {*} argument
- * @private
- */
-exports.coalesce = function() {
-    for (let i = 0; i < arguments.length; i++) {
-        const arg = arguments[i];
-        if (arg !== null && arg !== undefined)
-            return arg;
-    }
-};
-
-/*
  * Call an asynchronous function on an array of arguments,
  * calling `callback` with the completed results of all calls.
  *
@@ -112,6 +99,20 @@ exports.asyncAll = function (array, fn, callback) {
             if (--remaining === 0) callback(error, results);
         });
     });
+};
+
+/*
+ * Polyfill for Object.values. Not fully spec compliant, but we don't
+ * need it to be.
+ *
+ * @private
+ */
+exports.values = function (obj) {
+    const result = [];
+    for (const k in obj) {
+        result.push(obj[k]);
+    }
+    return result;
 };
 
 /*
@@ -154,37 +155,6 @@ exports.extend = function (dest) {
 };
 
 /**
- * Extend a destination object with all properties of the src object,
- * using defineProperty instead of simple assignment.
- * @param {Object} dest
- * @param {Object} src
- * @returns {Object} dest
- * @private
- */
-exports.extendAll = function (dest, src) {
-    for (const i in src) {
-        Object.defineProperty(dest, i, Object.getOwnPropertyDescriptor(src, i));
-    }
-    return dest;
-};
-
-/**
- * Extend a parent's prototype with all properties in a properties
- * object.
- *
- * @param {Object} parent
- * @param {Object} props
- * @returns {Object}
- * @private
- */
-exports.inherit = function (parent, props) {
-    const parentProto = typeof parent === 'function' ? parent.prototype : parent,
-        proto = Object.create(parentProto);
-    exports.extendAll(proto, props);
-    return proto;
-};
-
-/**
  * Given an object and a number of properties as strings, return version
  * of that object with only those properties.
  *
@@ -220,28 +190,6 @@ let id = 1;
  */
 exports.uniqueId = function () {
     return id++;
-};
-
-/**
- * Create a version of `fn` that is only called `time` milliseconds
- * after its last invocation
- *
- * @param {Function} fn the function to be debounced
- * @param {number} time millseconds after which the function will be invoked
- * @returns {Function} debounced function
- * @private
- */
-exports.debounce = function(fn, time) {
-    let timer, args;
-
-    return function() {
-        args = arguments;
-        clearTimeout(timer);
-
-        timer = setTimeout(() => {
-            fn.apply(null, args);
-        }, time);
-    };
 };
 
 /**
@@ -308,17 +256,6 @@ exports.getCoordinatesCenter = function(coords) {
  */
 exports.endsWith = function(string, suffix) {
     return string.indexOf(suffix, string.length - suffix.length) !== -1;
-};
-
-/**
- * Determine if a string starts with a particular substring
- * @param {string} string
- * @param {string} prefix
- * @returns {boolean}
- * @private
- */
-exports.startsWith = function(string, prefix) {
-    return string.indexOf(prefix) === 0;
 };
 
 /**

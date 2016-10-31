@@ -1,7 +1,6 @@
 'use strict';
 
 const pixelsToTileUnits = require('../source/pixels_to_tile_units');
-const createUniformPragmas = require('./create_uniform_pragmas');
 
 const tileSize = 512;
 
@@ -47,11 +46,8 @@ function drawBackground(painter, sourceCache, layer) {
         // Draw filling rectangle.
         if (painter.isOpaquePass !== (color[3] === 1)) return;
 
-        const pragmas = createUniformPragmas([
-            {name: 'u_color', components: 4},
-            {name: 'u_opacity', components: 1}
-        ]);
-        program = painter.useProgram('fill', [], pragmas, pragmas);
+        program = painter.useProgram('fill', painter.basicFillProgramConfiguration);
+
         gl.uniform4fv(program.u_color, color);
         gl.uniform1f(program.u_opacity, opacity);
         painter.tileExtentVAO.bind(gl, program, painter.tileExtentBuffer);

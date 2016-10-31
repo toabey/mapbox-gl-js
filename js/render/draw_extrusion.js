@@ -142,25 +142,21 @@ ExtrusionTexture.prototype.renderToMap = function() {
 };
 
 function drawExtrusion(painter, source, layer, coord) {
+    if (painter.isOpaquePass) return;
+
     const tile = source.getTile(coord);
     const bucket = tile.getBucket(layer);
     if (!bucket) return;
-    const bufferGroups = bucket.bufferGroups.fillextrusion;
-    if (!bufferGroups) return;
 
-    if (painter.isOpaquePass) return;
-
+    const buffers = bucket.buffers;
     const gl = painter.gl;
 
     const image = layer.paint['fill-pattern'];
 
-    const programOptions = bucket.paintAttributes.fillextrusion[layer.id];
-    const program = painter.useProgram(
-        image ? 'fillExtrudePattern' : 'fillExtrude',
-        programOptions.defines,
-        programOptions.vertexPragmas,
-        programOptions.fragmentPragmas
-    );
+    const layerData = buffers.layerData[layer.id];
+    const programConfiguration = layerData.programConfiguration;
+    const program = painter.useProgram(image ? 'fillExtrudePattern' : 'fillExtrude', programConfiguration);
+    programConfiguration.setUniforms(gl, program, layer, {zoom: painter.transform.zoom});
 
     if (image) {
         setPattern(image, tile, coord, painter, program, true);
@@ -169,12 +165,9 @@ function drawExtrusion(painter, source, layer, coord) {
     setMatrix(program, painter, coord, tile, layer);
     setLight(program, painter);
 
-    bucket.setUniforms(gl, 'fillextrusion', program, layer, {zoom: painter.transform.zoom});
-
-    for (let i = 0; i < bufferGroups.length; i++) {
-        const group = bufferGroups[i];
-        group.vaos[layer.id].bind(gl, program, group.layoutVertexBuffer, group.elementBuffer, group.paintVertexBuffers[layer.id]);
-        gl.drawElements(gl.TRIANGLES, group.elementBuffer.length * 3, gl.UNSIGNED_SHORT, 0);
+    for (const segment of buffers.segments) {
+        segment.vaos[layer.id].bind(gl, program, buffers.layoutVertexBuffer, buffers.elementBuffer, layerData.paintVertexBuffer, segment.vertexOffset);
+        gl.drawElements(gl.TRIANGLES, segment.primitiveLength * 3, gl.UNSIGNED_SHORT, segment.primitiveOffset * 3 * 2);
     }
 }
 

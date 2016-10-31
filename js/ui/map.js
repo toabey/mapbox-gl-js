@@ -3,7 +3,6 @@
 const util = require('../util/util');
 const browser = require('../util/browser');
 const window = require('../util/window');
-const Evented = require('../util/evented');
 const DOM = require('../util/dom');
 
 const Style = require('../style/style');
@@ -64,8 +63,7 @@ const defaultOptions = {
  * Then Mapbox GL JS initializes the map on the page and returns your `Map`
  * object.
  *
- * The `Map` inherits event methods from [`Evented`](#Evented).
- *
+ * @extends Evented
  * @param {Object} options
  * @param {HTMLElement|string} options.container The HTML element in which Mapbox GL JS will render the map, or the element's string `id`.
  * @param {number} [options.minZoom=0] The minimum zoom level of the map (1-20).
@@ -125,11 +123,13 @@ const defaultOptions = {
  * });
  * @see [Display a map](https://www.mapbox.com/mapbox-gl-js/examples/)
  */
-class Map extends Evented {
+class Map extends Camera {
 
     constructor(options) {
-        super();
         options = util.extend({}, defaultOptions, options);
+
+        const transform = new Transform(options.minZoom, options.maxZoom);
+        super(transform, options);
 
         this._interactive = options.interactive;
         this._failIfMajorPerformanceCaveat = options.failIfMajorPerformanceCaveat;
@@ -144,7 +144,6 @@ class Map extends Evented {
         }
 
         this.animationLoop = new AnimationLoop();
-        this.transform = new Transform(options.minZoom, options.maxZoom);
 
         if (options.maxBounds) {
             this.setMaxBounds(options.maxBounds);
@@ -1208,8 +1207,6 @@ class Map extends Evented {
     get vertices() { return !!this._vertices; }
     set vertices(value) { this._vertices = value; this._update(); }
 }
-
-util.extend(Map.prototype, Camera.prototype);
 
 module.exports = Map;
 

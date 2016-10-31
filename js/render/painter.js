@@ -11,10 +11,7 @@ const StructArrayType = require('../util/struct_array');
 const Buffer = require('../data/buffer');
 const VertexArrayObject = require('./vertex_array_object');
 const RasterBoundsArray = require('./draw_raster').RasterBoundsArray;
-const createUniformPragmas = require('./create_uniform_pragmas');
-const assert = require('assert');
-const shaders = require('mapbox-gl-shaders');
-const utilSource = shaders.util;
+const ProgramConfiguration = require('../data/program_configuration');
 
 const draw = {
     symbol: require('./draw_symbol'),
@@ -51,6 +48,12 @@ class Painter {
         this.depthEpsilon = 1 / Math.pow(2, 16);
 
         this.lineWidthRange = gl.getParameter(gl.ALIASED_LINE_WIDTH_RANGE);
+
+        this.basicFillProgramConfiguration = ProgramConfiguration.createStatic([
+            {name: 'u_color', components: 4},
+            {name: 'u_opacity', components: 1}
+        ]);
+        this.emptyProgramConfiguration = ProgramConfiguration.createStatic([]);
     }
 
     /*
@@ -155,17 +158,13 @@ class Painter {
 
         let idNext = 1;
         this._tileClippingMaskIDs = {};
-        for (let i = 0; i < coords.length; i++) {
-            const coord = coords[i];
+
+        for (const coord of coords) {
             const id = this._tileClippingMaskIDs[coord.id] = (idNext++) << 3;
 
             gl.stencilFunc(gl.ALWAYS, id, 0xF8);
 
-            const pragmas = createUniformPragmas([
-                {name: 'u_color', components: 4},
-                {name: 'u_opacity', components: 1}
-            ]);
-            const program = this.useProgram('fill', [], pragmas, pragmas);
+            const program = this.useProgram('fill', this.basicFillProgramConfiguration);
             gl.uniformMatrix4fv(program.u_matrix, false, coord.posMatrix);
 
             // Draw the clipping mask
@@ -276,10 +275,7 @@ class Painter {
         this.id = layer.id;
 
         let type = layer.type;
-        if (type === 'fill' &&
-            (!layer.isPaintValueFeatureConstant('fill-extrude-height') ||
-            !layer.isPaintValueZoomConstant('fill-extrude-height') ||
-            layer.getPaintValue('fill-extrude-height') !== 0)) {
+        if (type === 'fill' && layer.isExtruded({zoom: this.transform.zoom})) {
             type = 'extrusion';
         }
 
@@ -372,78 +368,20 @@ class Painter {
         }
     }
 
-    _createProgram(name, defines, vertexPragmas, fragmentPragmas) {
-        const gl = this.gl;
-        const program = gl.createProgram();
-        const definition = shaders[name];
-
-        let definesSource = '#define MAPBOX_GL_JS;\n';
-        for (let j = 0; j < defines.length; j++) {
-            definesSource += `#define ${defines[j]};\n`;
-        }
-
-        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(fragmentShader, applyPragmas(definesSource + definition.fragmentSource, fragmentPragmas));
-        gl.compileShader(fragmentShader);
-        assert(gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS), gl.getShaderInfoLog(fragmentShader));
-        gl.attachShader(program, fragmentShader);
-
-        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-        gl.shaderSource(vertexShader, applyPragmas(definesSource + utilSource + definition.vertexSource, vertexPragmas));
-        gl.compileShader(vertexShader);
-        assert(gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS), gl.getShaderInfoLog(vertexShader));
-        gl.attachShader(program, vertexShader);
-
-        gl.linkProgram(program);
-        assert(gl.getProgramParameter(program, gl.LINK_STATUS), gl.getProgramInfoLog(program));
-
-        const attributes = {};
-        const numAttributes = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
-        for (let i = 0; i < numAttributes; i++) {
-            const attribute = gl.getActiveAttrib(program, i);
-            attributes[attribute.name] = gl.getAttribLocation(program, attribute.name);
-        }
-
-        const uniforms = {};
-        const numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
-        for (let ui = 0; ui < numUniforms; ui++) {
-            const uniform = gl.getActiveUniform(program, ui);
-            uniforms[uniform.name] = gl.getUniformLocation(program, uniform.name);
-        }
-
-        return util.extend({
-            program: program,
-            definition: definition,
-            attributes: attributes,
-            numAttributes: numAttributes
-        }, attributes, uniforms);
-    }
-
-    _createProgramCached(name, defines, vertexPragmas, fragmentPragmas) {
+    _createProgramCached(name, paintAttributeSet) {
         this.cache = this.cache || {};
-
-        const key = JSON.stringify({
-            name: name,
-            defines: defines,
-            vertexPragmas: vertexPragmas,
-            fragmentPragmas: fragmentPragmas
-        });
-
+        const key = `${name}${paintAttributeSet.cacheKey}${!!this._showOverdrawInspector}`;
         if (!this.cache[key]) {
-            this.cache[key] = this._createProgram(name, defines, vertexPragmas, fragmentPragmas);
+            this.cache[key] = paintAttributeSet.createProgram(name, this._showOverdrawInspector, this.gl);
         }
         return this.cache[key];
     }
 
-    useProgram(nextProgramName, defines, vertexPragmas, fragmentPragmas) {
+    useProgram(name, paintAttributeSet) {
         const gl = this.gl;
 
-        defines = defines || [];
-        if (this._showOverdrawInspector) {
-            defines = defines.concat('OVERDRAW_INSPECTOR');
-        }
-
-        const nextProgram = this._createProgramCached(nextProgramName, defines, vertexPragmas, fragmentPragmas);
+        const nextProgram = this._createProgramCached(name,
+            paintAttributeSet || this.emptyProgramConfiguration);
         const previousProgram = this.currentProgram;
 
         if (previousProgram !== nextProgram) {
@@ -453,12 +391,6 @@ class Painter {
 
         return nextProgram;
     }
-}
-
-function applyPragmas(source, pragmas) {
-    return source.replace(/#pragma mapbox: ([\w]+) ([\w]+) ([\w]+) ([\w]+)/g, (match, operation, precision, type, name) => {
-        return pragmas[operation][name].replace(/{type}/g, type).replace(/{precision}/g, precision);
-    });
 }
 
 module.exports = Painter;

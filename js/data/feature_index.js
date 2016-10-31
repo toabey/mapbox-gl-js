@@ -50,9 +50,9 @@ class FeatureIndex {
         this.setCollisionTile(collisionTile);
     }
 
-    insert(feature, featureIndex, sourceLayerIndex, bucketIndex) {
+    insert(feature, bucketIndex) {
         const key = this.featureIndexArray.length;
-        this.featureIndexArray.emplaceBack(featureIndex, sourceLayerIndex, bucketIndex);
+        this.featureIndexArray.emplaceBack(feature.index, feature.sourceLayerIndex, bucketIndex);
         const geometry = loadGeometry(feature);
 
         for (let r = 0; r < geometry.length; r++) {
@@ -75,17 +75,17 @@ class FeatureIndex {
         this.collisionTile = collisionTile;
     }
 
-    serialize() {
-        const data = {
+    serialize(transferables) {
+        const grid = this.grid.toArrayBuffer();
+        if (transferables) {
+            transferables.push(grid);
+        }
+        return {
             coord: this.coord,
             overscaling: this.overscaling,
-            grid: this.grid.toArrayBuffer(),
-            featureIndexArray: this.featureIndexArray.serialize(),
+            grid: grid,
+            featureIndexArray: this.featureIndexArray.serialize(transferables),
             bucketLayerIDs: this.bucketLayerIDs
-        };
-        return {
-            data: data,
-            transferables: [data.grid, data.featureIndexArray.arrayBuffer]
         };
     }
 
@@ -146,7 +146,7 @@ class FeatureIndex {
         matching.sort(topDownFeatureComparator);
         this.filterMatching(result, matching, this.featureIndexArray, queryGeometry, filter, params.layers, styleLayers, args.bearing, pixelsToTileUnits);
 
-        const matchingSymbols = this.collisionTile.queryRenderedSymbols(minX, minY, maxX, maxY, args.scale);
+        const matchingSymbols = this.collisionTile.queryRenderedSymbols(queryGeometry, args.scale);
         matchingSymbols.sort();
         this.filterMatching(result, matchingSymbols, this.collisionTile.collisionBoxArray, queryGeometry, filter, params.layers, styleLayers, args.bearing, pixelsToTileUnits);
 
