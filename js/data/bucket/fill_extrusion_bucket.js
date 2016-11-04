@@ -1,8 +1,8 @@
 'use strict';
 
 const Bucket = require('../bucket');
-const VertexArrayType = require('../vertex_array_type');
-const ElementArrayType = require('../element_array_type');
+const createVertexArrayType = require('../vertex_array_type');
+const createElementArrayType = require('../element_array_type');
 const loadGeometry = require('../load_geometry');
 const EXTENT = require('../extent');
 const earcut = require('earcut');
@@ -11,7 +11,7 @@ const assert = require('assert');
 const EARCUT_MAX_RINGS = 500;
 
 const fillExtrusionInterface = {
-    layoutVertexArrayType: new VertexArrayType([{
+    layoutVertexArrayType: createVertexArrayType([{
         name: 'a_pos',
         components: 2,
         type: 'Int16'
@@ -24,37 +24,37 @@ const fillExtrusionInterface = {
         components: 1,
         type: 'Int16'
     }]),
-    elementArrayType: new ElementArrayType(3),
+    elementArrayType: createElementArrayType(3),
 
     paintAttributes: [{
-        name: 'a_minH',
+        name: 'a_base',
         components: 1,
         type: 'Uint16',
         getValue: (layer, globalProperties, featureProperties) => {
-            return [Math.max(layer.getPaintValue("fill-extrude-base", globalProperties, featureProperties), 0)];
+            return [Math.max(layer.getPaintValue("fill-extrusion-base", globalProperties, featureProperties), 0)];
         },
         multiplier: 1,
-        paintProperty: 'fill-extrude-base'
+        paintProperty: 'fill-extrusion-base'
     }, {
-        name: 'a_maxH',
+        name: 'a_height',
         components: 1,
         type: 'Uint16',
         getValue: (layer, globalProperties, featureProperties) => {
-            return [Math.max(layer.getPaintValue("fill-extrude-height", globalProperties, featureProperties), 0)];
+            return [Math.max(layer.getPaintValue("fill-extrusion-height", globalProperties, featureProperties), 0)];
         },
         multiplier: 1,
-        paintProperty: 'fill-extrude-height'
+        paintProperty: 'fill-extrusion-height'
     }, {
         name: 'a_color',
         components: 4,
         type: 'Uint8',
         getValue: (layer, globalProperties, featureProperties) => {
-            const color = layer.getPaintValue("fill-color", globalProperties, featureProperties);
+            const color = layer.getPaintValue("fill-extrusion-color", globalProperties, featureProperties);
             color[3] = 1.0;
             return color;
         },
         multiplier: 255,
-        paintProperty: 'fill-color'
+        paintProperty: 'fill-extrusion-color'
     }]
 };
 

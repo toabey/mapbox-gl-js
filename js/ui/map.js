@@ -730,9 +730,6 @@ class Map extends Camera {
     /**
      * Removes a layer from the map's style.
      *
-     * Also removes any layers which refer to the specified layer via a
-     * [`ref` property](https://www.mapbox.com/mapbox-gl-style-spec/#layer-ref).
-     *
      * @param {string} id The ID of the layer to remove.
      * @throws {Error} if no layer with the specified `id` exists.
      * @returns {Map} `this`
@@ -1462,7 +1459,7 @@ function removeNode(node) {
 
  /**
   * A `MapDataEvent` object is emitted with the [`Map#data`](#Map.event:data)
-  * and [`Map#data`](#Map.event:dataloading) events. Possible values for
+  * and [`Map#dataloading`](#Map.event:dataloading) events. Possible values for
   * `dataType`s are:
   *
   * - `'source'`: The non-tile data associated with any source

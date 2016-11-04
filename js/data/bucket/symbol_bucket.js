@@ -3,8 +3,8 @@
 const Point = require('point-geometry');
 const ArrayGroup = require('../array_group');
 const BufferGroup = require('../buffer_group');
-const VertexArrayType = require('../vertex_array_type');
-const ElementArrayType = require('../element_array_type');
+const createVertexArrayType = require('../vertex_array_type');
+const createElementArrayType = require('../element_array_type');
 const EXTENT = require('../extent');
 const Anchor = require('../../symbol/anchor');
 const getAnchors = require('../../symbol/get_anchors');
@@ -25,8 +25,9 @@ const shapeIcon = Shaping.shapeIcon;
 const getGlyphQuads = Quads.getGlyphQuads;
 const getIconQuads = Quads.getIconQuads;
 
-const elementArrayType = new ElementArrayType();
-const layoutVertexArrayType = new VertexArrayType([{
+const elementArrayType = createElementArrayType();
+
+const layoutVertexArrayType = createVertexArrayType([{
     name: 'a_pos',
     components: 2,
     type: 'Int16'
@@ -54,7 +55,7 @@ const symbolInterfaces = {
         elementArrayType: elementArrayType
     },
     collisionBox: {
-        layoutVertexArrayType: new VertexArrayType([{
+        layoutVertexArrayType: createVertexArrayType([{
             name: 'a_pos',
             components: 2,
             type: 'Int16'
@@ -67,7 +68,7 @@ const symbolInterfaces = {
             components: 2,
             type: 'Uint8'
         }]),
-        elementArrayType: new ElementArrayType(2)
+        elementArrayType: createElementArrayType(2)
     }
 };
 
@@ -114,6 +115,7 @@ class SymbolBucket {
         this.zoom = options.zoom;
         this.overscaling = options.overscaling;
         this.layers = options.layers;
+        this.index = options.index;
         this.sdfIcons = options.sdfIcons;
         this.iconsNeedLinear = options.iconsNeedLinear;
         this.adjustedTextSize = options.adjustedTextSize;
@@ -212,9 +214,12 @@ class SymbolBucket {
     }
 
     destroy() {
-        this.buffers.icon.destroy();
-        this.buffers.glyph.destroy();
-        this.buffers.collisionBox.destroy();
+        if (this.buffers) {
+            this.buffers.icon.destroy();
+            this.buffers.glyph.destroy();
+            this.buffers.collisionBox.destroy();
+            this.buffers = null;
+        }
     }
 
     createArrays() {
@@ -230,11 +235,10 @@ class SymbolBucket {
         // to use a text-size value that is the same for all zoom levels.
         // This calculates text-size at a high zoom level so that all tiles can
         // use the same value when calculating anchor positions.
-        const zoomHistory = { lastIntegerZoom: Infinity, lastIntegerZoomTime: 0, lastZoom: 0 };
-        this.adjustedTextMaxSize = this.layers[0].getLayoutValue('text-size', {zoom: 18, zoomHistory: zoomHistory});
-        this.adjustedTextSize = this.layers[0].getLayoutValue('text-size', {zoom: this.zoom + 1, zoomHistory: zoomHistory});
-        this.adjustedIconMaxSize = this.layers[0].getLayoutValue('icon-size', {zoom: 18, zoomHistory: zoomHistory});
-        this.adjustedIconSize = this.layers[0].getLayoutValue('icon-size', {zoom: this.zoom + 1, zoomHistory: zoomHistory});
+        this.adjustedTextMaxSize = this.layers[0].getLayoutValue('text-size', {zoom: 18});
+        this.adjustedTextSize = this.layers[0].getLayoutValue('text-size', {zoom: this.zoom + 1});
+        this.adjustedIconMaxSize = this.layers[0].getLayoutValue('icon-size', {zoom: 18});
+        this.adjustedIconSize = this.layers[0].getLayoutValue('icon-size', {zoom: this.zoom + 1});
 
         const tileSize = 512 * this.overscaling;
         this.tilePixelRatio = EXTENT / tileSize;

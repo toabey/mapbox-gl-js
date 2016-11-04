@@ -7,10 +7,10 @@ const SourceCache = require('../source/source_cache');
 const EXTENT = require('../data/extent');
 const pixelsToTileUnits = require('../source/pixels_to_tile_units');
 const util = require('../util/util');
-const StructArrayType = require('../util/struct_array');
 const Buffer = require('../data/buffer');
 const VertexArrayObject = require('./vertex_array_object');
-const RasterBoundsArray = require('./draw_raster').RasterBoundsArray;
+const RasterBoundsArray = require('../data/raster_bounds_array');
+const PosArray = require('../data/pos_array');
 const ProgramConfiguration = require('../data/program_configuration');
 
 const draw = {
@@ -18,7 +18,7 @@ const draw = {
     circle: require('./draw_circle'),
     line: require('./draw_line'),
     fill: require('./draw_fill'),
-    extrusion: require('./draw_extrusion'),
+    'fill-extrusion': require('./draw_fill_extrusion'),
     raster: require('./draw_raster'),
     background: require('./draw_background'),
     debug: require('./draw_debug')
@@ -86,16 +86,12 @@ class Painter {
         this._depthMask = false;
         gl.depthMask(false);
 
-        const PosArray = this.PosArray = new StructArrayType({
-            members: [{ name: 'a_pos', type: 'Int16', components: 2 }]
-        });
-
         const tileExtentArray = new PosArray();
         tileExtentArray.emplaceBack(0, 0);
         tileExtentArray.emplaceBack(EXTENT, 0);
         tileExtentArray.emplaceBack(0, EXTENT);
         tileExtentArray.emplaceBack(EXTENT, EXTENT);
-        this.tileExtentBuffer = new Buffer(tileExtentArray.serialize(), PosArray.serialize(), Buffer.BufferType.VERTEX);
+        this.tileExtentBuffer = Buffer.fromStructArray(tileExtentArray, Buffer.BufferType.VERTEX);
         this.tileExtentVAO = new VertexArrayObject();
         this.tileExtentPatternVAO = new VertexArrayObject();
 
@@ -105,7 +101,7 @@ class Painter {
         debugArray.emplaceBack(EXTENT, EXTENT);
         debugArray.emplaceBack(0, EXTENT);
         debugArray.emplaceBack(0, 0);
-        this.debugBuffer = new Buffer(debugArray.serialize(), PosArray.serialize(), Buffer.BufferType.VERTEX);
+        this.debugBuffer = Buffer.fromStructArray(debugArray, Buffer.BufferType.VERTEX);
         this.debugVAO = new VertexArrayObject();
 
         const rasterBoundsArray = new RasterBoundsArray();
@@ -113,7 +109,7 @@ class Painter {
         rasterBoundsArray.emplaceBack(EXTENT, 0, 32767, 0);
         rasterBoundsArray.emplaceBack(0, EXTENT, 0, 32767);
         rasterBoundsArray.emplaceBack(EXTENT, EXTENT, 32767, 32767);
-        this.rasterBoundsBuffer = new Buffer(rasterBoundsArray.serialize(), RasterBoundsArray.serialize(), Buffer.BufferType.VERTEX);
+        this.rasterBoundsBuffer = Buffer.fromStructArray(rasterBoundsArray, Buffer.BufferType.VERTEX);
         this.rasterBoundsVAO = new VertexArrayObject();
     }
 
@@ -122,7 +118,23 @@ class Painter {
      */
     clearColor() {
         const gl = this.gl;
-        gl.clearColor(0, 0, 0, 0);
+        const firstGroup = this.style._groups[0];
+        const background = firstGroup && firstGroup[0].type === 'background' ? firstGroup[0] : null;
+
+        // if the bottommost layer is a solid background, use its color for clearColor
+        // to avoid rendering with full quads later
+        if (background && !background.paint['background-pattern'] && !background.isHidden()) {
+            const color = background.paint['background-color'];
+            const opacity = background.paint['background-opacity'];
+            gl.clearColor(
+                color[0] * opacity,
+                color[1] * opacity,
+                color[2] * opacity,
+                color[3] * opacity);
+        } else {
+            gl.clearColor(0, 0, 0, 0);
+        }
+
         gl.clear(gl.COLOR_BUFFER_BIT);
     }
 
@@ -228,12 +240,12 @@ class Painter {
             let j;
             let coords = [];
             if (sourceCache) {
+                if (sourceCache.prepare) sourceCache.prepare();
                 coords = sourceCache.getVisibleCoordinates();
                 for (j = 0; j < coords.length; j++) {
                     coords[j].posMatrix = this.transform.calculatePosMatrix(coords[j], sourceCache.getSource().maxzoom);
                 }
                 this.clearStencil();
-                if (sourceCache.prepare) sourceCache.prepare();
                 if (sourceCache.getSource().isTileClipped) {
                     this._renderTileClippingMasks(coords);
                 }
@@ -274,12 +286,7 @@ class Painter {
         if (layer.type !== 'background' && !coords.length) return;
         this.id = layer.id;
 
-        let type = layer.type;
-        if (type === 'fill' && layer.isExtruded({zoom: this.transform.zoom})) {
-            type = 'extrusion';
-        }
-
-        draw[type](painter, sourceCache, layer, coords);
+        draw[layer.type](painter, sourceCache, layer, coords);
     }
 
     setDepthSublayer(n) {
