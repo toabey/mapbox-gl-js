@@ -13,10 +13,7 @@ const TRANSITION_SUFFIX = '-transition';
 class StyleLayer extends Evented {
     constructor(layer) {
         super();
-        this.set(layer);
-    }
 
-    set(layer) {
         this.id = layer.id;
         this.metadata = layer.metadata;
         this.type = layer.type;
@@ -160,9 +157,9 @@ class StyleLayer extends Evented {
         }
     }
 
-    getPaintInterpolationT(name, zoom) {
+    getPaintInterpolationT(name, globalProperties) {
         const transition = this._paintTransitions[name];
-        return transition.declaration.calculateInterpolationT({ zoom: zoom });
+        return transition.declaration.calculateInterpolationT(globalProperties);
     }
 
     isPaintValueFeatureConstant(name) {
