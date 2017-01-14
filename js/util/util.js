@@ -109,7 +109,7 @@ exports.asyncAll = function (array, fn, callback) {
  */
 exports.values = function (obj) {
     const result = [];
-    for (const k in obj) {
+    for (var k in obj) {
         result.push(obj[k]);
     }
     return result;
@@ -126,7 +126,7 @@ exports.values = function (obj) {
  */
 exports.keysDifference = function (obj, other) {
     const difference = [];
-    for (const i in obj) {
+    for (var i in obj) {
         if (!(i in other)) {
             difference.push(i);
         }
@@ -147,7 +147,7 @@ exports.keysDifference = function (obj, other) {
 exports.extend = function (dest) {
     for (let i = 1; i < arguments.length; i++) {
         const src = arguments[i];
-        for (const k in src) {
+        for (var k in src) {
             dest[k] = src[k];
         }
     }
@@ -268,7 +268,7 @@ exports.endsWith = function(string, suffix) {
  */
 exports.mapObject = function(input, iterator, context) {
     const output = {};
-    for (const key in input) {
+    for (var key in input) {
         output[key] = iterator.call(context || this, input[key], key, input);
     }
     return output;
@@ -283,7 +283,7 @@ exports.mapObject = function(input, iterator, context) {
  */
 exports.filterObject = function(input, iterator, context) {
     const output = {};
-    for (const key in input) {
+    for (var key in input) {
         if (iterator.call(context || this, input[key], key, input)) {
             output[key] = input[key];
         }
@@ -310,7 +310,7 @@ exports.deepEqual = function(a, b) {
         if (!(typeof b === 'object')) return false;
         const keys = Object.keys(a);
         if (keys.length !== Object.keys(b).length) return false;
-        for (const key in a) {
+        for (var key in a) {
             if (!exports.deepEqual(a[key], b[key])) return false;
         }
         return true;
